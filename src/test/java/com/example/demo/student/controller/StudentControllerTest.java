@@ -9,6 +9,7 @@ import com.example.demo.utils.ResponseBodyMatchers;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = StudentController.class)
 @ExtendWith(MockitoExtension.class)
+@Tag("Unit")
 class StudentControllerTest {
 
     @Autowired
@@ -113,13 +116,15 @@ class StudentControllerTest {
     @Test
     void addStudent_NotValidPayload_Returns400() throws Exception {
 //        when
-        mockMvc.perform(
+        MvcResult mvcResult = mockMvc.perform(
                 post("/api/v1/students")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(notValidStudent))
-        ).andExpect(status().isBadRequest());
+        ).andExpect(status().isBadRequest()).andReturn();
 
 //        then
+
+        assertThat(mvcResult.getResolvedException()).isInstanceOf(MethodArgumentNotValidException.class);
         verify(studentService, times(0)).addStudent(any());
     }
 
@@ -160,6 +165,7 @@ class StudentControllerTest {
 
         verify(studentService).deleteStudent(studentIdArgumentCaptor.capture());
 
+        assertThat(mvcResult.getResolvedException()).isInstanceOf(StudentNotFoundException.class);
         assertThat(Objects.requireNonNull(mvcResult.getResolvedException()).getMessage()).isEqualToIgnoringWhitespace(exceptionMessage);
         assertThat(studentIdArgumentCaptor.getValue()).isEqualTo(studentId);
 

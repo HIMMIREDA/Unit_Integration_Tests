@@ -6,6 +6,7 @@ import com.example.demo.student.StudentRepository;
 import com.example.demo.student.StudentService;
 import com.example.demo.student.exception.BadRequestException;
 import com.example.demo.student.exception.StudentNotFoundException;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@Tag("Unit")
 class StudentServiceTest {
 
 
@@ -94,10 +96,13 @@ class StudentServiceTest {
     }
 
     @Test
-    void deleteStudent_IdExists_ThrowsStudentNotFoundException() {
+    void deleteStudent_IdNotExists_ThrowsStudentNotFoundException() {
 //        given
         Long id = 2L;
+
+        given(studentRepository.existsById(anyLong())).willReturn(false);
 //        when
+//        then
         assertThatThrownBy(() -> underTest.deleteStudent(id)).isInstanceOf(
                 StudentNotFoundException.class
         ).hasMessageContaining("Student with id " + id + " does not exists");
